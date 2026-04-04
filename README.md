@@ -102,6 +102,7 @@ Key sections:
 
 | Document | What it covers |
 |---|---|
+| [docs/generator.md](docs/generator.md) | Build pipeline, Jinja2 templates, config.yaml reference |
 | [docs/decisions.md](docs/decisions.md) | Design decisions, feature priorities, and trade-offs |
 | [docs/database.md](docs/database.md) | What you need from vBulletin, schema notes, importing |
 | [docs/encoding.md](docs/encoding.md) | The MySQL latin1/cp1252 encoding problem and fix |
