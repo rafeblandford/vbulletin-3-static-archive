@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Search — {{ config.site.name }}{% endblock %}
+
+{% block head %}
+<link href="{{ base_path }}/pagefind/pagefind-ui.css" rel="stylesheet">
+<style>
+:root {
+    --pagefind-ui-scale: 1;
+    --pagefind-ui-primary: #095F93;
+    --pagefind-ui-text: #1a1a1a;
+    --pagefind-ui-background: #ffffff;
+    --pagefind-ui-border: #e0e0e0;
+    --pagefind-ui-tag: #f5f6f8;
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: 6px;
+    --pagefind-ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="breadcrumbs">
+<a href="{{ base_path }}/">Forum Index</a><span class="sep">›</span> Search
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Search the Archive</h1>
+<p class="page-meta">Search across {{ stats.threads|commafy }} threads and {{ stats.posts|commafy }} posts.</p>
+<div id="search"></div>
+<script src="{{ base_path }}/pagefind/pagefind-ui.js"></script>
+<script>
+new PagefindUI({
+    element: "#search",
+    showSubResults: true,
+    showImages: false
+});
+</script>
+{% endblock %}

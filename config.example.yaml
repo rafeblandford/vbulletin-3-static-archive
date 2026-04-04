@@ -1,0 +1,77 @@
+# vBulletin Static Archive — Site Configuration
+# Copy this to config.yaml and edit for your forum.
+
+# Site identity
+site:
+  name: "All About Symbian Forum Archive"
+  short_name: "All About Symbian"
+  url: "https://allaboutsymbian.com"
+  base_path: "/forum"                    # URL prefix (e.g., /forum or empty string for root)
+  description: "Community discussions about Symbian smartphones"
+  date_range: "2001–2013"               # Display range (human-readable, for banners/footers)
+  publisher: "Rafe Blandford"            # Schema.org publisher name
+
+# Archive banner (shown on every page)
+banner:
+  text: "Read-only archive of the {site_name} ({date_range})"
+  about_link_text: "About this archive"
+
+# Header navigation links
+# Each entry: label, url (relative to base_path unless starts with http)
+nav_links:
+  - label: "Forums"
+    url: "/"
+  - label: "Search"
+    url: "/search/"
+  - label: "Stats"
+    url: "/stats/"
+  - label: "About"
+    url: "/about/"
+  - label: "AAS Archive"
+    url: "https://allaboutsymbian.com/"
+    external: true
+
+# Footer
+footer:
+  text: "This is a read-only archive of the {site_name} discussion forum, which was active from {date_range}. Personal data has been minimised."
+  links:
+    - label: "Forum Index"
+      url: "/"
+    - label: "Statistics"
+      url: "/stats/"
+    - label: "All About Symbian"
+      url: "https://allaboutsymbian.com/"
+    - label: "Archive Portal"
+      url: "https://archive.rafeblandford.com/"
+
+# Database connection
+database:
+  host: "172.20.0.9"
+  user: "root"
+  name: "allabout_vb"
+  charset: "latin1"                      # Almost always latin1 for vBulletin 3.x
+
+# Content settings
+content:
+  posts_per_page: 30                     # Paginate threads with more posts than this
+  threads_per_page: 50                   # Threads per forum listing page
+  popular_threads: 15                    # Number of popular threads on index page
+  notable_contributors: 40              # Number of top users to show
+
+  # Forum IDs to skip entirely (e.g., link/redirect forums with no real content)
+  skip_forums: [62, 61, 74, 78, 106]
+
+  # Override forum parent IDs for display (cosmetic hierarchy fixes)
+  # Format: child_forum_id: new_parent_id
+  parent_overrides:
+    113: 40    # Symbian^3 phones -> S60
+    22: 40     # Symbian Gaming -> S60
+
+# Custom pages (optional)
+# The .sis listing is specific to Symbian forums — remove or adapt for your forum.
+custom_pages:
+  sis_listing:
+    enabled: true
+    title: "Symbian App Packages"
+    path: "/symbian-apps/"
+    description: "Downloadable .sis Symbian application packages shared by the community"

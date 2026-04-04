@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}About — {{ config.site.name }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="breadcrumbs">
+<a href="{{ base_path }}/">Forum Index</a><span class="sep">›</span> About
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">About This Archive</h1>
+<div class="prose">
+
+<p>This is a read-only archive of the {{ config.site.short_name }} discussion forum, preserved as static HTML. The forum was active from {{ config.site.date_range }} and contains {{ stats.threads|commafy }} threads with {{ stats.posts|commafy }} posts from {{ stats.users|commafy }} members.</p>
+
+<h2>What's included</h2>
+<ul>
+<li>All public threads and posts</li>
+<li>Forum structure and hierarchy</li>
+<li>File attachments shared by community members</li>
+<li>User-posted images (where originally hosted externally, links are preserved but images may no longer be available)</li>
+</ul>
+
+<h2>What's not included</h2>
+<ul>
+<li>Private messages</li>
+<li>User profiles and personal data (email addresses, IP addresses, passwords)</li>
+<li>User avatars and signatures</li>
+<li>Post edit history</li>
+<li>Content from banned/spam accounts</li>
+</ul>
+
+<h2>Finding content</h2>
+<ul>
+<li><strong><a href="{{ base_path }}/">Browse</a></strong> the forum index to explore by category</li>
+<li><strong><a href="{{ base_path }}/search/">Search</a></strong> across all threads using Pagefind (runs entirely in your browser)</li>
+<li><strong><a href="{{ base_path }}/stats/">Statistics</a></strong> for an overview of forum activity over time</li>
+</ul>
+
+<h2>Privacy</h2>
+<p>This archive has been created with privacy in mind. Personal data has been minimised: email addresses, IP addresses, passwords, private messages, and date-of-birth fields have all been excluded. Usernames are retained as they were publicly visible during the forum's active life.</p>
+
+<p>This archive is maintained under the GDPR Article 89 exemption for archiving in the public interest. If you would like your content removed, please contact us and we will process your request promptly.</p>
+
+<h2>Technical details</h2>
+<p>This archive was generated from a vBulletin 3.8 MySQL database using <a href="https://github.com/rafeblandford/vbulletin-3-static-archive">vbulletin-static-archive</a>, an open-source static site generator built with Python, Jinja2, and a custom BBCode-to-HTML converter. Search is powered by <a href="https://pagefind.app/">Pagefind</a>, which builds a static index and runs entirely client-side via WebAssembly — no server resources required.</p>
+
+</div>
+{% endblock %}

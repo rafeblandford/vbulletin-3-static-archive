@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}{{ config.site.name }}{% endblock %}</title>
+{% block meta %}{% endblock %}
+<link rel="stylesheet" href="{{ base_path }}/static/style.css">
+{% block head %}{% endblock %}
+</head>
+<body>
+<div class="archive-banner">{{ config.banner.text }} · <a href="{{ base_path }}/about/">{{ config.banner.about_link_text }}</a></div>
+<header class="site-header"><div class="header-inner">
+<a href="{{ base_path }}/" class="site-title">{{ config.site.name }}</a>
+<nav class="header-nav">
+{% for link in config.nav_links %}
+<a href="{% if link.external %}{{ link.url }}{% else %}{{ base_path }}{{ link.url }}{% endif %}">{{ link.label }}</a>
+{% endfor %}
+</nav>
+</div></header>
+{% block breadcrumbs %}{% endblock %}
+<main class="container">
+{% block content %}{% endblock %}
+</main>
+<footer class="site-footer">
+<p>{{ config.footer.text }} <a href="{{ base_path }}/about/">Privacy &amp; about</a>.</p>
+<div class="footer-links">
+{% for link in config.footer.links %}
+<a href="{% if link.url.startswith('http') %}{{ link.url }}{% else %}{{ base_path }}{{ link.url }}{% endif %}">{{ link.label }}</a>
+{% endfor %}
+</div>
+</footer>
+</body>
+</html>

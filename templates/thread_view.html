@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}{{ thread.title }} — {{ forum.title }} — {{ config.site.name }}{% endblock %}
+{% block meta %}
+<meta name="description" content="{{ first_post_excerpt }}">
+<link rel="canonical" href="{{ config.site.url }}{{ base_path }}/thread/{{ thread.threadid }}/">
+{% endblock %}
+
+{% block head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "DiscussionForumPosting",
+  "headline": "{{ thread.title|e }}",
+  "url": "{{ config.site.url }}{{ base_path }}/thread/{{ thread.threadid }}/",
+  "datePublished": "{{ thread.dateline_iso }}",
+  "author": {
+    "@type": "Person",
+    "name": "{{ thread.postusername|e }}"
+  },
+  "interactionStatistic": [
+    {
+      "@type": "InteractionCounter",
+      "interactionType": "https://schema.org/ReplyAction",
+      "userInteractionCount": {{ thread.replycount }}
+    },
+    {
+      "@type": "InteractionCounter",
+      "interactionType": "https://schema.org/ViewAction",
+      "userInteractionCount": {{ thread.views }}
+    }
+  ],
+  "isPartOf": {
+    "@type": "DiscussionForum",
+    "name": "{{ forum.title|e }}",
+    "url": "{{ config.site.url }}{{ base_path }}/f/{{ forum.forumid }}/"
+  },
+  "text": "{{ first_post_excerpt }}"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type": "ListItem", "position": 1, "name": "Forum Index", "item": "{{ config.site.url }}{{ base_path }}/"},
+    {% for crumb in breadcrumbs %}
+    {"@type": "ListItem", "position": {{ loop.index + 1 }}, "name": "{{ crumb.title|e }}", "item": "{{ config.site.url }}{{ base_path }}/f/{{ crumb.forumid }}/"},
+    {% endfor %}
+    {"@type": "ListItem", "position": {{ breadcrumbs|length + 2 }}, "name": "{{ forum.title|e }}", "item": "{{ config.site.url }}{{ base_path }}/f/{{ forum.forumid }}/"},
+    {"@type": "ListItem", "position": {{ breadcrumbs|length + 3 }}, "name": "{{ thread.title|e }}"}
+  ]
+}
+</script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="breadcrumbs">
+<a href="{{ base_path }}/">Forum Index</a><span class="sep">›</span>
+{% for crumb in breadcrumbs %}
+<a href="{{ base_path }}/f/{{ crumb.forumid }}/">{{ crumb.title }}</a><span class="sep">›</span>
+{% endfor %}
+<a href="{{ base_path }}/f/{{ forum.forumid }}/">{{ forum.title }}</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ thread.title }}</h1>
+<p class="page-meta">{{ thread.replycount }} replies · {{ thread.views|commafy }} views · Started {{ thread.date_str }}</p>
+
+{% if poll %}
+<div class="poll-notice">
+This thread included a poll: <strong>{{ poll.question }}</strong>
+</div>
+{% endif %}
+
+{% if total_pages > 1 %}
+<div class="pagination">
+{% if page > 1 %}<a href="{{ base_path }}/thread/{{ thread.threadid }}/{% if page > 2 %}page/{{ page - 1 }}/{% endif %}">← Prev</a>{% endif %}
+{% for p in page_range %}
+{% if p == page %}
+<span class="current">{{ p }}</span>
+{% elif p == '...' %}
+<span>…</span>
+{% else %}
+<a href="{{ base_path }}/thread/{{ thread.threadid }}/{% if p > 1 %}page/{{ p }}/{% endif %}">{{ p }}</a>
+{% endif %}
+{% endfor %}
+{% if page < total_pages %}<a href="{{ base_path }}/thread/{{ thread.threadid }}/page/{{ page + 1 }}/">Next →</a>{% endif %}
+</div>
+{% endif %}
+
+<div class="post-list" data-pagefind-body>
+{% for post in posts %}
+<article class="post-card{% if loop.first and page == 1 %} first-post{% endif %}" id="post{{ post.postid }}">
+<div class="post-header">
+<span class="post-author">{{ post.display_name }}</span>
+<span class="post-date"><a href="#post{{ post.postid }}" style="color: inherit; text-decoration: none;">{{ post.date_str }}</a></span>
+</div>
+<div class="post-body">{{ post.html_content }}</div>
+{% if post.attachments %}
+<div class="post-attachments">
+Attachments:
+{% for a in post.attachments %}
+{% if a.is_image %}
+<a href="{{ base_path }}/attachments/{{ a.attachmentid }}_{{ a.filename }}"><img src="{{ base_path }}/attachments/thumbs/{{ a.attachmentid }}_thumb.{{ a.extension }}" loading="lazy" alt="{{ a.filename }}" class="post-image"></a>
+{% else %}
+<a href="{{ base_path }}/attachments/{{ a.attachmentid }}_{{ a.filename }}">{{ a.filename }}</a> ({{ a.size_str }})
+{% endif %}
+{% endfor %}
+</div>
+{% endif %}
+</article>
+{% endfor %}
+</div>
+
+{% if total_pages > 1 %}
+<div class="pagination">
+{% if page > 1 %}<a href="{{ base_path }}/thread/{{ thread.threadid }}/{% if page > 2 %}page/{{ page - 1 }}/{% endif %}">← Prev</a>{% endif %}
+{% for p in page_range %}
+{% if p == page %}
+<span class="current">{{ p }}</span>
+{% elif p == '...' %}
+<span>…</span>
+{% else %}
+<a href="{{ base_path }}/thread/{{ thread.threadid }}/{% if p > 1 %}page/{{ p }}/{% endif %}">{{ p }}</a>
+{% endif %}
+{% endfor %}
+{% if page < total_pages %}<a href="{{ base_path }}/thread/{{ thread.threadid }}/page/{{ page + 1 }}/">Next →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

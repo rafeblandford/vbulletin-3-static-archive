@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Statistics — {{ config.site.name }}{% endblock %}
+{% block meta %}
+<meta name="description" content="Statistics and activity data for the {{ config.site.short_name }} forum archive: {{ stats.posts|commafy }} posts across {{ stats.threads|commafy }} threads.">
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="breadcrumbs">
+<a href="{{ base_path }}/">Forum Index</a><span class="sep">›</span> Statistics
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Forum Statistics</h1>
+<div class="stats-bar">
+<span><span class="stat-value">{{ stats.threads|commafy }}</span> threads</span>
+<span><span class="stat-value">{{ stats.posts|commafy }}</span> posts</span>
+<span><span class="stat-value">{{ stats.users|commafy }}</span> members</span>
+<span><span class="stat-value">{{ stats.forums }}</span> forums</span>
+</div>
+
+<div class="category-group">
+<h2 class="category-title">Posts Over Time</h2>
+<div class="forum-list" style="padding: 1rem;">
+<canvas id="postsChart" height="300"></canvas>
+</div>
+</div>
+
+<div class="category-group">
+<h2 class="category-title">Activity by Year</h2>
+<div class="forum-list">
+<table class="thread-table" style="border: none; border-radius: 0;">
+<thead><tr><th>Year</th><th class="num">Posts</th><th class="num">Threads</th></tr></thead>
+<tbody>
+{% for y in yearly_stats %}
+<tr><td>{{ y.year }}</td><td class="num">{{ y.posts|commafy }}</td><td class="num">{{ y.threads|commafy }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="category-group">
+<h2 class="category-title">Busiest Days</h2>
+<div class="forum-list">
+<table class="thread-table" style="border: none; border-radius: 0;">
+<thead><tr><th>Date</th><th class="num">Posts</th></tr></thead>
+<tbody>
+{% for d in busiest_days %}
+<tr><td>{{ d.day }}</td><td class="num">{{ d.posts|commafy }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="category-group">
+<h2 class="category-title">Top 20 Forums by Posts</h2>
+<div class="forum-list" style="padding: 1rem;">
+<canvas id="forumsChart" height="400"></canvas>
+</div>
+</div>
+
+{% if top_users %}
+<div class="category-group">
+<h2 class="category-title">Notable Contributors</h2>
+<div class="forum-list" style="padding: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 2rem;">
+{% for u in top_users %}
+<div style="min-width: 200px; padding: 0.3rem 0; font-size: 0.9rem;">
+<strong style="color: var(--blue);">{{ u.username }}</strong>
+<span style="color: var(--text-muted);">· {{ u.posts|commafy }} posts ({{ u.join_year }}–{{ u.last_year }})</span>
+</div>
+{% endfor %}
+</div>
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+const monthlyData = {{ monthly_json }};
+new Chart(document.getElementById('postsChart'), {
+    type: 'line',
+    data: {
+        labels: monthlyData.map(d => d[0]),
+        datasets: [{
+            data: monthlyData.map(d => d[1]),
+            borderColor: '#095F93',
+            backgroundColor: 'rgba(9,95,147,0.1)',
+            fill: true,
+            pointRadius: 0,
+            tension: 0.3
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { ticks: { maxTicksLimit: 12 } },
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+const forumsData = {{ forums_json }};
+new Chart(document.getElementById('forumsChart'), {
+    type: 'bar',
+    data: {
+        labels: forumsData.map(d => d[0]),
+        datasets: [{
+            data: forumsData.map(d => d[1]),
+            backgroundColor: '#095F93'
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } }
+    }
+});
+</script>
+{% endblock %}

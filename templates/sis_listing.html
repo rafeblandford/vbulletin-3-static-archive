@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}{{ sis_config.title|default('Attachment Listing') }} — {{ config.site.name }}{% endblock %}
+{% block meta %}
+<meta name="description" content="{{ sis_config.description|default('Downloadable attachments from the forum archive.') }}">
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="breadcrumbs">
+<a href="{{ base_path }}/">Forum Index</a><span class="sep">›</span> {{ sis_config.title|default('Attachments') }}
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ sis_config.title|default('Attachment Listing') }}</h1>
+<p class="page-meta">{{ sis_files|length }} files from the forum archive. {{ sis_config.description|default('') }}</p>
+
+<table class="thread-table">
+<thead><tr><th>Filename</th><th>Size</th><th>Source Thread</th><th>Date</th></tr></thead>
+<tbody>
+{% for s in sis_files %}
+<tr>
+<td><a href="{{ base_path }}/attachments/{{ s.attachmentid }}_{{ s.filename }}">{{ s.filename }}</a></td>
+<td class="num">{{ s.size_str }}</td>
+<td><a href="{{ base_path }}/thread/{{ s.threadid }}/">{{ s.thread_title }}</a></td>
+<td class="date">{{ s.date_str }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}{{ config.site.name }}{% endblock %}
+{% block meta %}
+<meta name="description" content="Archive of the {{ config.site.short_name }} discussion forum. {{ stats.threads|commafy }} threads and {{ stats.posts|commafy }} posts from {{ config.site.date_range }}.">
+{% endblock %}
+
+{% block head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "{{ config.site.name }}",
+  "url": "{{ config.site.url }}{{ base_path }}/",
+  "description": "{{ config.site.description }}",
+  "publisher": {
+    "@type": "Person",
+    "name": "{{ config.site.publisher }}"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Forum Index</h1>
+<div class="stats-bar">
+<span><span class="stat-value">{{ stats.threads|commafy }}</span> threads</span>
+<span><span class="stat-value">{{ stats.posts|commafy }}</span> posts</span>
+<span><span class="stat-value">{{ stats.users|commafy }}</span> members</span>
+<span><span class="stat-value">{{ stats.forums }}</span> forums</span>
+<span>{{ config.site.date_range }}</span>
+</div>
+
+{% for cat in categories %}
+{% if cat.children %}
+<div class="category-group">
+<h2 class="category-title">{{ cat.title }}</h2>
+<div class="forum-list">
+{% for sub in cat.children %}
+{% if sub.children %}
+{# Sub-category with child forums #}
+<div class="forum-row" style="background: var(--bg);">
+<div class="forum-icon"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2z"/></svg></div>
+<div class="forum-info">
+<div class="forum-name" style="font-size: 1.05rem;"><a href="{{ base_path }}/f/{{ sub.forumid }}/">{{ sub.title }}</a></div>
+</div>
+<div class="forum-stats"><span class="count">{{ sub.total_threads|commafy }}</span> threads</div>
+</div>
+{% for child in sub.children %}
+{% if child.thread_count > 0 %}
+<div class="forum-row sub-forum">
+<div class="forum-info">
+<div class="forum-name"><a href="{{ base_path }}/f/{{ child.forumid }}/">{{ child.title }}</a></div>
+</div>
+<div class="forum-stats"><span class="count">{{ child.thread_count|commafy }}</span><br>{{ child.reply_count|commafy }} posts</div>
+</div>
+{% for gc in child.children|default([]) %}
+{% if gc.thread_count > 0 %}
+<div class="forum-row sub-forum-deep">
+<div class="forum-info">
+<div class="forum-name"><a href="{{ base_path }}/f/{{ gc.forumid }}/">{{ gc.title }}</a></div>
+</div>
+<div class="forum-stats"><span class="count">{{ gc.thread_count|commafy }}</span><br>{{ gc.reply_count|commafy }} posts</div>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% elif sub.thread_count > 0 %}
+{# Direct forum, no children #}
+<div class="forum-row">
+<div class="forum-icon"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2z"/></svg></div>
+<div class="forum-info">
+<div class="forum-name"><a href="{{ base_path }}/f/{{ sub.forumid }}/">{{ sub.title }}</a></div>
+</div>
+<div class="forum-stats"><span class="count">{{ sub.thread_count|commafy }}</span> threads<br>{{ sub.reply_count|commafy }} posts</div>
+</div>
+{% endif %}
+{% endfor %}
+</div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% if popular_threads %}
+<div class="category-group">
+<h2 class="category-title">Most Popular Threads</h2>
+<div class="forum-list">
+<table class="thread-table" style="border: none; border-radius: 0;">
+<thead><tr><th>Thread</th><th>Views</th><th>Replies</th></tr></thead>
+<tbody>
+{% for t in popular_threads %}
+<tr>
+<td><div class="thread-title"><a href="{{ base_path }}/thread/{{ t.threadid }}/">{{ t.title }}</a></div>
+<div class="thread-starter">{{ t.forum_title }} · {{ t.date_str }}</div></td>
+<td class="num">{{ t.views|commafy }}</td>
+<td class="num">{{ t.replycount }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+{% if top_users %}
+<div class="category-group">
+<h2 class="category-title">Notable Contributors</h2>
+<div class="forum-list" style="padding: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 2rem;">
+{% for u in top_users %}
+<div style="min-width: 200px; padding: 0.3rem 0; font-size: 0.9rem;">
+<strong style="color: var(--blue);">{{ u.username }}</strong>
+<span style="color: var(--text-muted);">· {{ u.posts|commafy }} posts ({{ u.join_year }}–{{ u.last_year }})</span>
+</div>
+{% endfor %}
+</div>
+</div>
+{% endif %}
+{% endblock %}

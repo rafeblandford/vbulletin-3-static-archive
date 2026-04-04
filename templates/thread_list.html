@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}{{ forum.title }} — {{ config.site.name }}{% endblock %}
+{% block meta %}
+<meta name="description" content="{{ forum.title }} — {{ forum.thread_count|commafy }} threads in the {{ config.site.short_name }} forum archive.">
+{% endblock %}
+
+{% block head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "DiscussionForum",
+  "name": "{{ forum.title|e }}",
+  "url": "{{ config.site.url }}{{ base_path }}/f/{{ forum.forumid }}/",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "{{ config.site.name }}",
+    "url": "{{ config.site.url }}{{ base_path }}/"
+  }
+}
+</script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="breadcrumbs">
+<a href="{{ base_path }}/">Forum Index</a><span class="sep">›</span>
+{% for crumb in breadcrumbs %}
+<a href="{{ base_path }}/f/{{ crumb.forumid }}/">{{ crumb.title }}</a><span class="sep">›</span>
+{% endfor %}
+{{ forum.title }}
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ forum.title }}</h1>
+{% if forum.description %}<p class="page-meta">{{ forum.description }}</p>{% endif %}
+
+{% if sub_forums %}
+<div class="category-group" style="margin-bottom: 1.5rem;">
+<h2 class="category-title" style="font-size: 0.85rem;">Sub-forums</h2>
+<div class="forum-list">
+{% for sf in sub_forums %}
+<div class="forum-row">
+<div class="forum-icon"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2z"/></svg></div>
+<div class="forum-info">
+<div class="forum-name"><a href="{{ base_path }}/f/{{ sf.forumid }}/">{{ sf.title }}</a></div>
+</div>
+<div class="forum-stats"><span class="count">{{ sf.thread_count|commafy }}</span> threads</div>
+</div>
+{% endfor %}
+</div>
+</div>
+{% endif %}
+
+{% if threads %}
+<table class="thread-table">
+<thead><tr><th>Thread</th><th class="num">Replies</th><th class="num">Views</th><th>Last Post</th></tr></thead>
+<tbody>
+{% for t in threads %}
+<tr>
+<td>
+<div class="thread-title"><a href="{{ base_path }}/thread/{{ t.threadid }}/">{{ t.title }}</a></div>
+<div class="thread-starter">{{ t.postusername }} · {{ t.date_str }}</div>
+</td>
+<td class="num">{{ t.replycount }}</td>
+<td class="num">{{ t.views|commafy }}</td>
+<td class="date">{{ t.lastpost_str }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% if total_pages > 1 %}
+<div class="pagination">
+{% if page > 1 %}<a href="{{ base_path }}/f/{{ forum.forumid }}/{% if page > 2 %}page/{{ page - 1 }}/{% endif %}">← Prev</a>{% endif %}
+{% for p in page_range %}
+{% if p == page %}
+<span class="current">{{ p }}</span>
+{% elif p == '...' %}
+<span>…</span>
+{% else %}
+<a href="{{ base_path }}/f/{{ forum.forumid }}/{% if p > 1 %}page/{{ p }}/{% endif %}">{{ p }}</a>
+{% endif %}
+{% endfor %}
+{% if page < total_pages %}<a href="{{ base_path }}/f/{{ forum.forumid }}/page/{{ page + 1 }}/">Next →</a>{% endif %}
+</div>
+{% endif %}
+{% elif not sub_forums %}
+<p class="page-meta">No threads in this forum.</p>
+{% endif %}
+{% endblock %}
