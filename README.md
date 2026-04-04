@@ -78,6 +78,12 @@ cd output && python3 -m http.server 8000
 rsync -av output/ user@server:/var/www/forum/
 ```
 
+If your vBulletin stored attachments as database BLOBs, extract them first:
+
+```bash
+python3 extract_attachments.py -c config.yaml -o ./output/attachments/
+```
+
 See [docs/deployment.md](docs/deployment.md) for Caddy/nginx configuration, Pagefind setup, Cloudflare considerations, and URL redirects from the original vBulletin URLs.
 
 ## Configuration

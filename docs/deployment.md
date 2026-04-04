@@ -133,43 +133,15 @@ Submit `/sitemap.xml` to Google Search Console. Google will follow the index to 
 
 ## Attachment extraction
 
-If your vBulletin database stores attachments as BLOBs (the default for many installs), you'll need to extract them to the filesystem before or after building:
+If your vBulletin database stores attachments as BLOBs (the default for many installs), you'll need to extract them to the filesystem before or after building. Use the included `extract_attachments.py` script:
 
-```python
-#!/usr/bin/env python3
-"""Extract vBulletin attachments from database BLOBs to filesystem."""
-import os
-import pymysql
-
-conn = pymysql.connect(host='localhost', user='root', password='...',
-                       database='your_vb_db', charset='latin1')
-conn.encoding = 'iso-8859-1'
-
-output_dir = '/var/www/forum/attachments'
-thumb_dir = os.path.join(output_dir, 'thumbs')
-os.makedirs(thumb_dir, exist_ok=True)
-
-with conn.cursor(pymysql.cursors.DictCursor) as cur:
-    cur.execute("""
-        SELECT a.attachmentid, a.filename, a.extension, a.filedata, a.thumbnail
-        FROM attachment a WHERE a.visible = 1
-    """)
-    for row in cur:
-        aid = row['attachmentid']
-        fname = row['filename']
-        if row['filedata']:
-            path = os.path.join(output_dir, f"{aid}_{fname}")
-            with open(path, 'wb') as f:
-                f.write(row['filedata'])
-        if row['thumbnail']:
-            path = os.path.join(thumb_dir, f"{aid}_thumb.{row['extension']}")
-            with open(path, 'wb') as f:
-                f.write(row['thumbnail'])
-
-conn.close()
+```bash
+python3 extract_attachments.py -c config.yaml -o ./output/attachments/
 ```
 
-This script is separate from the main generator because it only needs to run once (attachments don't change in an archive).
+This reads the same `config.yaml` as the main generator. It extracts both full-size files and thumbnails (to an `attachments/thumbs/` subdirectory).
+
+This is a separate script because it only needs to run once — attachments don't change in an archive, so there's no need to re-extract on every build.
 
 ## Hosting costs
 
