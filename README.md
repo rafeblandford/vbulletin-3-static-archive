@@ -107,6 +107,7 @@ Key sections:
 | [docs/encoding.md](docs/encoding.md) | The MySQL latin1/cp1252 encoding problem and fix |
 | [docs/bbcode.md](docs/bbcode.md) | BBCode converter: what's handled, edge cases, extending |
 | [docs/deployment.md](docs/deployment.md) | Web server config, Pagefind, Cloudflare, URL redirects |
+| [docs/visualisations.md](docs/visualisations.md) | Advanced stats: network graphs, Sankey, ThemeRiver, heatmaps |
 | [docs/development.md](docs/development.md) | How this project was built (with Claude Code) |
 
 ## Real-world example
