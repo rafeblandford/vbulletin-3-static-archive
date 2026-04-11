@@ -11,9 +11,10 @@ Given a vBulletin 3.8 MySQL/MariaDB database dump, the generator produces:
 - **Forum index** with full category hierarchy, popular threads, notable contributors
 - **Thread listings** with pagination (configurable threads per page)
 - **Thread pages** with complete BBCode-to-HTML conversion, paginated for long threads
+- **User profile pages** with threads started, post counts, and Person JSON-LD
 - **Statistics page** with Chart.js visualisations (posts over time, top forums, busiest days)
 - **Full-text search** via [Pagefind](https://pagefind.app/) (client-side, zero server resources)
-- **Schema.org structured data** (DiscussionForumPosting, BreadcrumbList, DiscussionForum, WebSite)
+- **Schema.org structured data** (DiscussionForumPosting with Comment array, ProfilePage, BreadcrumbList, DiscussionForum, WebSite)
 - **Split sitemaps** respecting Google's 50,000 URL limit
 - **About/privacy page** with GDPR notice
 - **Attachment references** with inline images and download links
@@ -26,7 +27,6 @@ This tool works with what's in the vBulletin database. It's worth understanding 
 
 - **No user avatars or profile images.** vBulletin stores avatar paths in the database but the actual files lived on the web server's filesystem. If you have the original server files, you could add avatar support.
 - **No post edit history.** vBulletin stores the current version of each post, not revision history.
-- **No user profiles.** The generator creates an archive of discussions, not a user directory. Usernames appear on posts but there are no profile pages.
 - **No private messages.** Excluded by design (privacy).
 - **No reputation/thanks data.** vBulletin stores these but they add complexity without much archival value.
 - **No working polls.** Poll questions are shown as text notices; the interactive voting UI is not reproduced.
@@ -116,8 +116,11 @@ Key sections:
 The All About Symbian forum archive is live at **[allaboutsymbian.com/forum/](https://allaboutsymbian.com/forum/)**:
 
 - 76,783 threads, 449,030 posts from 39,542 members
+- 37,364 user profile pages with threads and activity stats
+- 118,000+ total static pages, 114,000+ sitemap URLs
 - 88 active forums in a 3-level hierarchy
 - 3,929 file attachments (327 MB)
+- Advanced stats: activity heatmap, forum affinity network, community migration Sankey, ThemeRiver
 - Lighthouse scores: 100 / 100 / 100 / 100
 - Full-text search across all content via Pagefind
 - Sitemaps submitted to Google Search Console

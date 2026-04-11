@@ -437,6 +437,30 @@ class ForumDB:
             LIMIT %s
         """, (limit,))
 
+    def get_all_posting_users(self):
+        """Get all users with visible posts, excluding banned/spam accounts."""
+        return self.query("""
+            SELECT u.userid, u.username, u.posts,
+                u.joindate, u.lastpost,
+                YEAR(FROM_UNIXTIME(u.joindate)) as join_year,
+                YEAR(FROM_UNIXTIME(u.lastpost)) as last_year
+            FROM user u
+            WHERE u.usergroupid NOT IN (8, 9)
+                AND u.posts > 0
+            ORDER BY u.posts DESC
+        """)
+
+    def get_all_user_threads(self):
+        """Batch-load all threads grouped by postuserid."""
+        return self.query("""
+            SELECT t.threadid, t.title, t.replycount, t.views, t.dateline,
+                t.lastpost, t.postuserid, f.title as forum_title, f.forumid
+            FROM thread t
+            JOIN forum f ON t.forumid = f.forumid
+            WHERE t.visible = 1
+            ORDER BY t.postuserid, t.dateline DESC
+        """)
+
     def build_post_thread_map(self):
         """Build postid -> threadid mapping for internal link rewriting."""
         rows = self.query("SELECT postid, threadid FROM post WHERE visible = 1")
@@ -697,6 +721,11 @@ def generate_site(db, config, output_dir, forum_filter=None, thread_limit=None):
                     p['username'] = decode_vb(p['username'])
                     p['display_name'] = p['username'] or user_lookup.get(p['userid'], f"Member #{p['userid']}" if p['userid'] else "Guest")
                     p['date_str'] = format_date_short(p['dateline'])
+                    p['dateline_iso'] = format_datetime(p['dateline']) if p['dateline'] else ''
+                    # Clean text excerpt for schema.org Comment
+                    clean_text = re.sub(r'\[.*?\]', '', p['pagetext']) if p['pagetext'] else ''
+                    clean_text = re.sub(r'\s+', ' ', clean_text).strip()
+                    p['text_excerpt'] = clean_text[:500]
 
                     p['html_content'] = bbcode_to_html(p['pagetext'])
                     p['html_content'] = rewrite_internal_links(p['html_content'], post_thread_map, base_path)
@@ -810,6 +839,77 @@ def generate_site(db, config, output_dir, forum_filter=None, thread_limit=None):
     about_html = tpl_about.render(stats=stats)
     write_file(os.path.join(output_dir, 'about/index.html'), about_html)
 
+    # --- Generate user profile pages ---
+    print("Loading users for profile pages...")
+    all_users = db.get_all_posting_users()
+
+    print("Batch-loading user threads...")
+    all_user_threads_raw = db.get_all_user_threads()
+
+    # Group threads by postuserid
+    threads_by_user = {}
+    forums_by_user = {}
+    for t in all_user_threads_raw:
+        uid = t['postuserid']
+        threads_by_user.setdefault(uid, []).append(t)
+        forums_by_user.setdefault(uid, set()).add(t['forumid'])
+    del all_user_threads_raw  # Free memory
+
+    tpl_user = env.get_template('user_profile.html')
+    users_generated = 0
+
+    for user in all_users:
+        uid = user['userid']
+        user['username'] = decode_vb(user['username'])
+        user['join_year'] = user['join_year'] or ''
+        user['last_year'] = user['last_year'] or ''
+        user['join_date_iso'] = format_datetime(user['joindate']) if user.get('joindate') else ''
+        user['last_post_iso'] = format_datetime(user['lastpost']) if user.get('lastpost') else ''
+
+        threads = threads_by_user.get(uid, [])
+        user['threads_started'] = len(threads)
+        user['forums_active'] = len(forums_by_user.get(uid, set()))
+
+        for t in threads:
+            t['title'] = decode_vb(t['title'])
+            t['forum_title'] = decode_vb(t['forum_title'])
+            t['date_str'] = format_date(t['dateline'], "%d %b %Y")
+            t['dateline_iso'] = format_datetime(t['dateline']) if t.get('dateline') else ''
+
+        user_html = tpl_user.render(user=user, threads=threads,
+                                    recent_posts=[])
+        write_file(os.path.join(output_dir, f'user/{uid}/index.html'), user_html)
+        users_generated += 1
+
+        if users_generated % 2000 == 0:
+            print(f"  {users_generated} user pages generated...")
+
+    print(f"  {users_generated} user profile pages generated")
+    total_pages_generated += users_generated
+
+    # --- Generate user index page ---
+    print("Generating user index page...")
+    # Build top users list with thread counts for the index
+    top_users_with_threads = []
+    for u in all_users[:100]:
+        u_copy = dict(u)
+        u_copy['threads_started'] = len(threads_by_user.get(u['userid'], []))
+        top_users_with_threads.append(u_copy)
+
+    # Compute year range
+    years = [u['join_year'] for u in all_users if u['join_year']] + \
+            [u['last_year'] for u in all_users if u['last_year']]
+    earliest_year = min(years) if years else ''
+    latest_year = max(years) if years else ''
+
+    tpl_user_index = env.get_template('user_index.html')
+    user_index_html = tpl_user_index.render(
+        users=all_users, top_users=top_users_with_threads,
+        earliest_year=earliest_year, latest_year=latest_year,
+    )
+    write_file(os.path.join(output_dir, 'users/index.html'), user_index_html)
+    total_pages_generated += 1
+
     # --- Generate sitemaps ---
     print("Generating sitemaps...")
     site_url = config['site']['url'].rstrip('/')
@@ -818,6 +918,7 @@ def generate_site(db, config, output_dir, forum_filter=None, thread_limit=None):
     all_urls = []
     all_urls.append((f'{site_url}{base_path}/', '1.0'))
     all_urls.append((f'{site_url}{base_path}/stats/', '0.7'))
+    all_urls.append((f'{site_url}{base_path}/users/', '0.6'))
 
     for forum in forums_raw:
         if forum['forumid'] in skip_forums:
@@ -830,6 +931,12 @@ def generate_site(db, config, output_dir, forum_filter=None, thread_limit=None):
         for tid in sorted(os.listdir(thread_dir)):
             if tid.isdigit():
                 all_urls.append((f'{site_url}{base_path}/thread/{tid}/', None))
+
+    user_dir = os.path.join(output_dir, 'user')
+    if os.path.exists(user_dir):
+        for uid in sorted(os.listdir(user_dir)):
+            if uid.isdigit():
+                all_urls.append((f'{site_url}{base_path}/user/{uid}/', '0.4'))
 
     sitemap_files = []
     for i in range(0, len(all_urls), MAX_URLS_PER_SITEMAP):

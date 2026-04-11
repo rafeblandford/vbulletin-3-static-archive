@@ -60,7 +60,7 @@
 <tr>
 <td>
 <div class="thread-title"><a href="{{ base_path }}/thread/{{ t.threadid }}/">{{ t.title }}</a></div>
-<div class="thread-starter">{{ t.postusername }} · {{ t.date_str }}</div>
+<div class="thread-starter">{% if t.postuserid %}<a href="{{ base_path }}/user/{{ t.postuserid }}/" style="color: inherit; text-decoration: none;">{{ t.postusername }}</a>{% else %}{{ t.postusername }}{% endif %} · {{ t.date_str }}</div>
 </td>
 <td class="num">{{ t.replycount }}</td>
 <td class="num">{{ t.views|commafy }}</td>

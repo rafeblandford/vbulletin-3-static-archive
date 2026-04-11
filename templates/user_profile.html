@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.username }} — {{ config.site.name }}{% endblock %}
+{% block meta %}
+<meta name="description" content="Posts by {{ user.username }} in the {{ config.site.short_name }} forum archive. {{ user.posts|commafy }} posts, active {{ user.join_year }}–{{ user.last_year }}.">
+<link rel="canonical" href="{{ config.site.url }}{{ base_path }}/user/{{ user.userid }}/">
+{% endblock %}
+
+{% block head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ProfilePage",
+  "dateCreated": "{{ user.join_date_iso }}",
+  "dateModified": "{{ user.last_post_iso }}",
+  "mainEntity": {
+    "@type": "Person",
+    "name": "{{ user.username|e }}",
+    "url": "{{ config.site.url }}{{ base_path }}/user/{{ user.userid }}/",
+    "interactionStatistic": [
+      {
+        "@type": "InteractionCounter",
+        "interactionType": "https://schema.org/WriteAction",
+        "userInteractionCount": {{ user.posts }}
+      },
+      {
+        "@type": "InteractionCounter",
+        "interactionType": "https://schema.org/CreateAction",
+        "userInteractionCount": {{ user.threads_started }}
+      }
+    ]
+  },
+  "url": "{{ config.site.url }}{{ base_path }}/user/{{ user.userid }}/",
+  "isPartOf": {
+    "@type": "DiscussionForum",
+    "name": "{{ config.site.name }}",
+    "url": "{{ config.site.url }}{{ base_path }}/"
+  }{% if threads %},
+  "hasPart": [
+    {% for t in threads[:20] %}
+    {
+      "@type": "DiscussionForumPosting",
+      "headline": "{{ t.title|e }}",
+      "url": "{{ config.site.url }}{{ base_path }}/thread/{{ t.threadid }}/",
+      "datePublished": "{{ t.dateline_iso }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+  {% endif %}
+}
+</script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="breadcrumbs">
+<a href="{{ base_path }}/">Forum Index</a><span class="sep">›</span>
+<a href="{{ base_path }}/users/">Members</a><span class="sep">›</span>
+{{ user.username }}
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ user.username }}</h1>
+<div class="stats-bar">
+<span><span class="stat-value">{{ user.posts|commafy }}</span> posts</span>
+<span><span class="stat-value">{{ user.threads_started|commafy }}</span> threads started</span>
+<span><span class="stat-value">{{ user.forums_active }}</span> forums</span>
+<span>Active {{ user.join_year }}–{{ user.last_year }}</span>
+</div>
+
+{% if threads %}
+<div class="category-group">
+<h2 class="category-title">Threads Started ({{ threads|length }})</h2>
+<div class="forum-list">
+<table class="thread-table">
+<thead><tr><th>Thread</th><th class="num">Replies</th><th class="num">Views</th><th>Forum</th></tr></thead>
+<tbody>
+{% for t in threads %}
+<tr>
+<td>
+<div class="thread-title"><a href="{{ base_path }}/thread/{{ t.threadid }}/">{{ t.title }}</a></div>
+<div class="thread-starter">{{ t.date_str }}</div>
+</td>
+<td class="num">{{ t.replycount }}</td>
+<td class="num">{{ t.views|commafy }}</td>
+<td><a href="{{ base_path }}/f/{{ t.forumid }}/">{{ t.forum_title }}</a></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+{% if recent_posts %}
+<div class="category-group">
+<h2 class="category-title">Recent Posts</h2>
+<div class="forum-list">
+<table class="thread-table">
+<thead><tr><th>Thread</th><th>Forum</th><th>Date</th></tr></thead>
+<tbody>
+{% for p in recent_posts %}
+<tr>
+<td><a href="{{ base_path }}/thread/{{ p.threadid }}/#post{{ p.postid }}">{{ p.thread_title }}</a></td>
+<td><a href="{{ base_path }}/f/{{ p.forumid }}/">{{ p.forum_title }}</a></td>
+<td class="date">{{ p.date_str }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
+{% endblock %}

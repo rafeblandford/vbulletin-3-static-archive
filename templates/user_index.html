@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Members — {{ config.site.name }}{% endblock %}
+{% block meta %}
+<meta name="description" content="Member directory for the {{ config.site.short_name }} forum archive. {{ users|length|commafy }} contributors who posted between {{ earliest_year }} and {{ latest_year }}.">
+{% endblock %}
+
+{% block head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Forum Members",
+  "description": "Directory of {{ users|length|commafy }} contributors to the {{ config.site.name }}",
+  "url": "{{ config.site.url }}{{ base_path }}/users/",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "{{ config.site.name }}",
+    "url": "{{ config.site.url }}{{ base_path }}/"
+  }
+}
+</script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="breadcrumbs">
+<a href="{{ base_path }}/">Forum Index</a><span class="sep">›</span>
+Members
+</nav>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Members</h1>
+<p class="page-meta">{{ users|length|commafy }} contributors to the {{ config.site.short_name }} forum archive.</p>
+
+<div class="category-group">
+<h2 class="category-title">Top Contributors</h2>
+<div class="forum-list">
+<table class="thread-table">
+<thead><tr><th>Member</th><th class="num">Posts</th><th class="num">Threads</th><th>Active</th></tr></thead>
+<tbody>
+{% for u in top_users %}
+<tr>
+<td><a href="{{ base_path }}/user/{{ u.userid }}/">{{ u.username }}</a></td>
+<td class="num">{{ u.posts|commafy }}</td>
+<td class="num">{{ u.threads_started|commafy }}</td>
+<td>{{ u.join_year }}–{{ u.last_year }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="category-group">
+<h2 class="category-title">All Members ({{ users|length|commafy }})</h2>
+<div class="forum-list" style="padding: 1rem; display: flex; flex-wrap: wrap; gap: 0.3rem 1.5rem;">
+{% for u in users %}
+<div style="min-width: 180px; padding: 0.2rem 0; font-size: 0.85rem;">
+<a href="{{ base_path }}/user/{{ u.userid }}/" style="text-decoration: none;">{{ u.username }}</a>
+<span style="color: var(--text-muted);">· {{ u.posts|commafy }}</span>
+</div>
+{% endfor %}
+</div>
+</div>
+{% endblock %}

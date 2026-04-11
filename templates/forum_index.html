@@ -109,7 +109,7 @@
 <div class="forum-list" style="padding: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 2rem;">
 {% for u in top_users %}
 <div style="min-width: 200px; padding: 0.3rem 0; font-size: 0.9rem;">
-<strong style="color: var(--blue);">{{ u.username }}</strong>
+<a href="{{ base_path }}/user/{{ u.userid }}/" style="color: var(--blue); font-weight: bold; text-decoration: none;">{{ u.username }}</a>
 <span style="color: var(--text-muted);">· {{ u.posts|commafy }} posts ({{ u.join_year }}–{{ u.last_year }})</span>
 </div>
 {% endfor %}

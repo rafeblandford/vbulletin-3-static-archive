@@ -16,8 +16,13 @@
   "datePublished": "{{ thread.dateline_iso }}",
   "author": {
     "@type": "Person",
-    "name": "{{ thread.postusername|e }}"
+    "name": "{{ thread.postusername|e }}"{% if thread.postuserid %},
+    "url": "{{ config.site.url }}{{ base_path }}/user/{{ thread.postuserid }}/"{% endif %}
   },
+  "commentCount": {{ thread.replycount }},
+  "articleSection": "{{ forum.title|e }}",
+  "inLanguage": "en",
+  "isAccessibleForFree": true,
   "interactionStatistic": [
     {
       "@type": "InteractionCounter",
@@ -35,7 +40,23 @@
     "name": "{{ forum.title|e }}",
     "url": "{{ config.site.url }}{{ base_path }}/f/{{ forum.forumid }}/"
   },
-  "text": "{{ first_post_excerpt }}"
+  "text": "{{ first_post_excerpt }}"{% if page == 1 and posts|length > 1 %},
+  "comment": [
+    {% for post in posts[1:] %}
+    {
+      "@type": "Comment",
+      "author": {
+        "@type": "Person",
+        "name": "{{ post.display_name|e }}"{% if post.userid %},
+        "url": "{{ config.site.url }}{{ base_path }}/user/{{ post.userid }}/"{% endif %}
+      },
+      "datePublished": "{{ post.dateline_iso }}",
+      "text": "{{ post.text_excerpt|e }}",
+      "url": "{{ config.site.url }}{{ base_path }}/thread/{{ thread.threadid }}/#post{{ post.postid }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+  {% endif %}
 }
 </script>
 <script type="application/ld+json">
@@ -94,7 +115,7 @@ This thread included a poll: <strong>{{ poll.question }}</strong>
 {% for post in posts %}
 <article class="post-card{% if loop.first and page == 1 %} first-post{% endif %}" id="post{{ post.postid }}">
 <div class="post-header">
-<span class="post-author">{{ post.display_name }}</span>
+<span class="post-author">{% if post.userid %}<a href="{{ base_path }}/user/{{ post.userid }}/" style="color: inherit; text-decoration: none;">{{ post.display_name }}</a>{% else %}{{ post.display_name }}{% endif %}</span>
 <span class="post-date"><a href="#post{{ post.postid }}" style="color: inherit; text-decoration: none;">{{ post.date_str }}</a></span>
 </div>
 <div class="post-body">{{ post.html_content }}</div>
