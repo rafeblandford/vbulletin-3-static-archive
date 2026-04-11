@@ -45,15 +45,13 @@ Bar chart showing how long threads with replies stayed active (same day, 1 week,
 
 All loaded from cdn.jsdelivr.net. The combined ~1.6 MB is significant for Lighthouse Performance scores. For the basic stats page (Chart.js only), the cost is ~200 KB.
 
-## Why these aren't in the default template
+## Included in the default template
 
-The advanced visualisations require:
+All advanced visualisations are now included in the default `stats.html` template and `build_pages.py`. The data queries run automatically — forums with insufficient data will simply produce smaller or empty charts.
 
-1. **Enough data** — a forum with 500 threads won't produce a meaningful affinity network or Sankey. AAS had 76K threads and 449K posts.
-2. **Editorial context** — the explainer text, era labels, and colour coding are specific to AAS's history. A generic version would need configuration for time periods, forum categories, and narrative.
-3. **Heavy JS** — 1.6 MB of libraries is fine for a stats page people visit intentionally, but the basic Chart.js version keeps the default lightweight.
+The editorial descriptions in the template reference AAS-specific history. Customise these for your own forum by editing the `<p>` elements in `templates/stats.html`.
 
-If you want to add these to your own archive, the AAS implementation at `~/Code/forum-archive/` (not this repo) shows the full approach — queries in `build_pages.py`, rendering in `templates/stats.html`.
+**Note:** The combined JS payload (~1.6 MB) is significant. The stats page loads these from CDN, which is acceptable for a page users visit intentionally. Thread and listing pages use no external JS.
 
 ## Fast iteration
 

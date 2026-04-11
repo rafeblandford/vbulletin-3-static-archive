@@ -1,8 +1,15 @@
 {% extends "base.html" %}
 
 {% block title %}Statistics — {{ config.site.name }}{% endblock %}
+
 {% block meta %}
-<meta name="description" content="Statistics and activity data for the {{ config.site.short_name }} forum archive: {{ stats.posts|commafy }} posts across {{ stats.threads|commafy }} threads.">
+<meta name="description" content="Statistics and community visualisations from the {{ config.site.short_name }} forum archive: {{ stats.posts|commafy }} posts across {{ stats.threads|commafy }} threads from {{ config.site.date_range }}.">
+{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3/dist/cytoscape.min.js"></script>
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -12,112 +19,484 @@
 {% endblock %}
 
 {% block content %}
+
 <h1 class="page-title">Forum Statistics</h1>
-<div class="stats-bar">
-<span><span class="stat-value">{{ stats.threads|commafy }}</span> threads</span>
+<p class="page-meta">A snapshot of the {{ config.site.short_name }} community, {{ config.site.date_range }}</p>
+
+<div class="stats-bar" style="margin-bottom: 2rem;">
 <span><span class="stat-value">{{ stats.posts|commafy }}</span> posts</span>
+<span><span class="stat-value">{{ stats.threads|commafy }}</span> threads</span>
 <span><span class="stat-value">{{ stats.users|commafy }}</span> members</span>
 <span><span class="stat-value">{{ stats.forums }}</span> forums</span>
 </div>
 
-<div class="category-group">
-<h2 class="category-title">Posts Over Time</h2>
-<div class="forum-list" style="padding: 1rem;">
-<canvas id="postsChart" height="300"></canvas>
+
+<div style="background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; margin-bottom: 2rem;">
+<h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">Posts Per Month</h2>
+<div style="position: relative; height: 300px;">
+<canvas id="postsChart"></canvas>
 </div>
+<p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.75rem;">The community's activity traces the arc of the Symbian platform — rapid growth from 2001, a peak in 2002–2003 as the Nokia 7650 and 6600 defined the smartphone era, a sustained second wave around the Nokia N95 in 2007, and a gradual decline as iOS and Android reshaped the market.</p>
 </div>
 
-<div class="category-group">
-<h2 class="category-title">Activity by Year</h2>
-<div class="forum-list">
-<table class="thread-table" style="border: none; border-radius: 0;">
-<thead><tr><th>Year</th><th class="num">Posts</th><th class="num">Threads</th></tr></thead>
-<tbody>
-{% for y in yearly_stats %}
-<tr><td>{{ y.year }}</td><td class="num">{{ y.posts|commafy }}</td><td class="num">{{ y.threads|commafy }}</td></tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
+
+<div style="background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; margin-bottom: 2rem;">
+<h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">When People Posted</h2>
+<div id="heatmap" style="width: 100%; height: 280px;"></div>
+<p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.75rem;">Posting activity by day of week and hour (UTC). The community was most active during European working hours (09:00–15:00, Monday–Friday) with a secondary evening peak. Weekends were noticeably quieter — this was an office-hours community.</p>
 </div>
 
-<div class="category-group">
-<h2 class="category-title">Busiest Days</h2>
-<div class="forum-list">
-<table class="thread-table" style="border: none; border-radius: 0;">
-<thead><tr><th>Date</th><th class="num">Posts</th></tr></thead>
-<tbody>
-{% for d in busiest_days %}
-<tr><td>{{ d.day }}</td><td class="num">{{ d.posts|commafy }}</td></tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</div>
 
-<div class="category-group">
-<h2 class="category-title">Top 20 Forums by Posts</h2>
-<div class="forum-list" style="padding: 1rem;">
-<canvas id="forumsChart" height="400"></canvas>
-</div>
-</div>
-
-{% if top_users %}
-<div class="category-group">
-<h2 class="category-title">Notable Contributors</h2>
-<div class="forum-list" style="padding: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem 2rem;">
+<div style="background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; margin-bottom: 2rem;">
+<h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">Notable Contributors</h2>
+<p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">The community members who contributed most to the forum's discussions.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 0.5rem 2rem;">
 {% for u in top_users %}
-<div style="min-width: 200px; padding: 0.3rem 0; font-size: 0.9rem;">
-<strong style="color: var(--blue);">{{ u.username }}</strong>
+<div style="min-width: 220px; padding: 0.3rem 0; font-size: 0.9rem;">
+<a href="{{ base_path }}/user/{{ u.userid }}/" style="text-decoration: none;"><strong style="color: var(--blue);">{{ u.username }}</strong></a>
 <span style="color: var(--text-muted);">· {{ u.posts|commafy }} posts ({{ u.join_year }}–{{ u.last_year }})</span>
 </div>
 {% endfor %}
 </div>
 </div>
-{% endif %}
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+
+<div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;">
+<div style="flex: 1; min-width: 300px; background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem;">
+<h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">Activity by Year</h2>
+<table class="thread-table" style="border: none; border-radius: 0;">
+<thead><tr><th>Year</th><th>Posts</th><th>Threads</th></tr></thead>
+<tbody>
+{% for y in yearly_stats %}
+<tr>
+<td>{{ y.year }}</td>
+<td class="num">{{ y.posts|commafy }}</td>
+<td class="num">{{ y.threads|commafy }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<div style="flex: 1; min-width: 300px; background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem;">
+<h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">Busiest Days</h2>
+<table class="thread-table" style="border: none; border-radius: 0;">
+<thead><tr><th>Date</th><th>Posts</th></tr></thead>
+<tbody>
+{% for d in busiest_days %}
+<tr>
+<td>{{ d.day }}</td>
+<td class="num">{{ d.posts|commafy }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+
+<div style="background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; margin-bottom: 2rem;">
+<h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">Most Active Forums</h2>
+<div style="position: relative; height: 400px;">
+<canvas id="forumsChart"></canvas>
+</div>
+</div>
+
+
+<div style="background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; margin-bottom: 2rem;">
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+<h2 style="font-size: 1.1rem; font-weight: 600; margin: 0;">Forum Affinity Network</h2>
+<div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; color: var(--text-muted);">
+<label for="threshold">Connection strength:</label>
+<input type="range" id="threshold" min="50" max="400" value="150" step="10" style="width: 140px; accent-color: var(--blue);">
+<span id="threshold-label" style="min-width: 90px;">≥ 150 shared</span>
+</div>
+</div>
+<div style="position: relative;">
+<div id="network" style="width: 100%; height: 600px; border-radius: 4px; background: #fafbfc;"></div>
+<div id="network-tooltip" style="display: none; position: absolute; background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.85rem; pointer-events: none; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.12); max-width: 320px; line-height: 1.5;"></div>
+</div>
+<p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.75rem;">Click a node to highlight its connections. Click the background to reset. Drag nodes to rearrange. Scroll to zoom. Adjust the slider to show stronger or weaker connections.</p>
+<div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 1rem;">
+<div style="flex: 1; min-width: 250px; font-size: 0.85rem; color: var(--text); line-height: 1.6;">
+<p>The Nokia device forums form a visible <strong>upgrade path</strong> — members moved from the 7650 to the 3650/6600, then to the N80 and N95. <strong>Series 60</strong> and <strong>Links of Interest</strong> sit near the centre, connecting device-specific communities. The <strong>Sony Ericsson UIQ</strong> forums cluster separately — a passionate but distinct community. The <strong>News &amp; Comments</strong> forums (green) were where people commented on articles published on the main site, before Disqus replaced them.</p>
+</div>
+<div style="min-width: 180px;">
+<div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Legend</div>
+<div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem;">
+<div style="display: flex; align-items: center; gap: 0.5rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #095F93; display: inline-block;"></span> S60 / Nokia phones</div>
+<div style="display: flex; align-items: center; gap: 0.5rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #e85d2a; display: inline-block;"></span> UIQ / Sony Ericsson</div>
+<div style="display: flex; align-items: center; gap: 0.5rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #2ca02c; display: inline-block;"></span> News &amp; discussion</div>
+<div style="display: flex; align-items: center; gap: 0.5rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #9467bd; display: inline-block;"></span> General &amp; community</div>
+<div style="display: flex; align-items: center; gap: 0.5rem;"><span style="width: 12px; height: 12px; border-radius: 50%; background: #8c564b; display: inline-block;"></span> Development</div>
+</div>
+<p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.75rem;">Node size reflects total posts.</p>
+</div>
+</div>
+</div>
+
+
+<div style="background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; margin-bottom: 2rem;">
+<h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Community Migration</h2>
+<p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">How members' primary forum changed across five eras. Follow the streams to see the Nokia upgrade path — from 7650 to 6600 to N95 — and how general forums grew as device-specific ones faded.</p>
+<div id="sankey" style="width: 100%; height: 550px;"></div>
+<p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.75rem;">Each user is assigned to their most-posted forum per era. Flows of fewer than 5 users are hidden. Hover over a flow to see details.</p>
+</div>
+
+
+<div style="background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; margin-bottom: 2rem;">
+<h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">Forum Activity Over Time</h2>
+<div id="streamgraph" style="width: 100%; height: 380px;"></div>
+<div id="river-legend" style="display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: center; padding-top: 8px;"></div>
+<p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.75rem;">How the top 15 forums contributed to the conversation over time. Hover over a forum name or the river itself to isolate its activity.</p>
+</div>
+
+
+<div style="background: var(--white); border: 1px solid var(--border); border-radius: 6px; padding: 1.5rem; margin-bottom: 2rem;">
+<h2 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem;">Thread Lifespan</h2>
+<div style="display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start;">
+<div style="flex: 1; min-width: 280px;">
+<div id="lifespanChart" style="width: 100%; height: 250px;"></div>
+</div>
+<div style="flex: 1; min-width: 280px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; padding-top: 0.5rem;">
+<p>How long threads with replies stayed active. Most discussions resolved within a week, but 11% lasted over a year — the firmware trackers and FAQ megathreads that became living reference documents maintained by the community.</p>
+</div>
+</div>
+</div>
+
 <script>
-const monthlyData = {{ monthly_json }};
-new Chart(document.getElementById('postsChart'), {
-    type: 'line',
-    data: {
-        labels: monthlyData.map(d => d[0]),
-        datasets: [{
-            data: monthlyData.map(d => d[1]),
-            borderColor: '#095F93',
-            backgroundColor: 'rgba(9,95,147,0.1)',
-            fill: true,
-            pointRadius: 0,
-            tension: 0.3
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-            x: { ticks: { maxTicksLimit: 12 } },
-            y: { beginAtZero: true }
-        }
-    }
-});
+document.addEventListener('DOMContentLoaded', function() {
 
-const forumsData = {{ forums_json }};
-new Chart(document.getElementById('forumsChart'), {
-    type: 'bar',
-    data: {
-        labels: forumsData.map(d => d[0]),
-        datasets: [{
-            data: forumsData.map(d => d[1]),
-            backgroundColor: '#095F93'
+    // =====================================================================
+    // 1. Posts per month (Chart.js)
+    // =====================================================================
+    var monthlyData = {{ monthly_json }};
+    new Chart(document.getElementById('postsChart'), {
+        type: 'line',
+        data: {
+            labels: monthlyData.map(d => d[0]),
+            datasets: [{
+                label: 'Posts',
+                data: monthlyData.map(d => d[1]),
+                borderColor: '#095F93',
+                backgroundColor: 'rgba(9, 95, 147, 0.1)',
+                fill: true, tension: 0.3, pointRadius: 0, borderWidth: 1.5
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { callback: function(val) { var l = this.getLabelForValue(val); if (!l.endsWith('-01')) return ''; var yr = parseInt(l.substring(0,4)); return (yr % 2 === 1) ? String(yr) : ''; }, autoSkip: false, maxRotation: 0 }, grid: { display: false } },
+                y: { ticks: { callback: function(v) { return v.toLocaleString(); } }, grid: { color: '#f0f0f0' } }
+            }
+        }
+    });
+
+    // =====================================================================
+    // 2. Activity heatmap (ECharts)
+    // =====================================================================
+    var heatmapRaw = {{ heatmap_json }};
+    var heatmapChart = echarts.init(document.getElementById('heatmap'));
+    var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    var hours = [];
+    for (var i = 0; i < 24; i++) hours.push(i + ':00');
+
+    var heatData = heatmapRaw.map(function(d) {
+        return [d[1], d[0] - 1, d[2]];
+    });
+    var maxVal = Math.max(...heatmapRaw.map(d => d[2]));
+
+    heatmapChart.setOption({
+        tooltip: {
+            formatter: function(p) { return days[p.data[1]] + ' ' + hours[p.data[0]] + ': ' + p.data[2].toLocaleString() + ' posts'; }
+        },
+        grid: { left: 50, right: 30, top: 10, bottom: 30 },
+        xAxis: { type: 'category', data: hours, splitArea: { show: true }, axisLabel: { fontSize: 10, interval: 2 } },
+        yAxis: { type: 'category', data: days, splitArea: { show: true }, axisLabel: { fontSize: 11 } },
+        visualMap: {
+            min: 0, max: maxVal, calculable: false, show: false,
+            inRange: { color: ['#f5f6f8', '#c6dbef', '#6baed6', '#2171b5', '#08306b'] }
+        },
+        series: [{
+            type: 'heatmap', data: heatData,
+            label: { show: false },
+            itemStyle: { borderWidth: 2, borderColor: '#fff' }
         }]
-    },
-    options: {
-        indexAxis: 'y',
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { x: { beginAtZero: true } }
+    });
+
+    // =====================================================================
+    // 4. Most active forums (Chart.js)
+    // =====================================================================
+    var forumData = {{ forums_json }};
+    new Chart(document.getElementById('forumsChart'), {
+        type: 'bar',
+        data: {
+            labels: forumData.map(d => d[0]),
+            datasets: [{ label: 'Posts', data: forumData.map(d => d[1]), backgroundColor: '#095F93', borderRadius: 3 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { callback: function(v) { return v.toLocaleString(); } }, grid: { color: '#f0f0f0' } },
+                y: { ticks: { font: { size: 11 } } }
+            }
+        }
+    });
+
+    // =====================================================================
+    // 5. Forum affinity network (Cytoscape.js)
+    // =====================================================================
+    var allNodes = {{ nodes_json }};
+    var allEdges = {{ edges_json }};
+    var categoryColours = {{ category_json }};
+
+    function getColour(forumId) {
+        var cat = categoryColours[forumId] || '';
+        if (cat.indexOf('S60') >= 0 || cat.indexOf('Symbian Based') >= 0 || cat.indexOf('Older Phones') >= 0 || cat.indexOf('Series 80') >= 0) return '#095F93';
+        if (cat.indexOf('UIQ') >= 0) return '#e85d2a';
+        if (cat.indexOf('News') >= 0) return '#2ca02c';
+        if (cat.indexOf('General') >= 0 || cat.indexOf('Community') >= 0) return '#9467bd';
+        if (cat.indexOf('Development') >= 0) return '#8c564b';
+        return '#7f7f7f';
     }
+
+    var maxPosts = Math.max(...allNodes.map(n => n.posts));
+
+    function buildElements(threshold) {
+        var visibleEdges = allEdges.filter(e => e.weight >= threshold);
+        var connectedIds = new Set();
+        visibleEdges.forEach(e => { connectedIds.add(e.source); connectedIds.add(e.target); });
+        var visibleNodes = allNodes.filter(n => connectedIds.has(n.id));
+        var maxWeight = Math.max(...visibleEdges.map(e => e.weight), 1);
+
+        return [
+            ...visibleNodes.map(n => ({
+                data: {
+                    id: 'f' + n.id,
+                    label: n.label.replace(/ and /g, ' & ').replace(/Nokia /g, '').replace(/Sony Ericsson /g, 'SE ').replace(/, /g, '/'),
+                    fullLabel: n.label,
+                    posts: n.posts,
+                    size: 20 + Math.sqrt(n.posts / maxPosts) * 50,
+                    colour: getColour(n.id)
+                }
+            })),
+            ...visibleEdges.map(e => ({
+                data: {
+                    source: 'f' + e.source,
+                    target: 'f' + e.target,
+                    weight: e.weight,
+                    width: 1 + (e.weight / maxWeight) * 8
+                }
+            }))
+        ];
+    }
+
+    var cy = cytoscape({
+        container: document.getElementById('network'),
+        elements: buildElements(150),
+        style: [
+            { selector: 'node', style: {
+                'width': 'data(size)', 'height': 'data(size)', 'label': 'data(label)',
+                'font-size': '10px', 'font-weight': '500',
+                'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                'color': '#333', 'text-valign': 'bottom', 'text-margin-y': 8,
+                'background-color': 'data(colour)', 'background-opacity': 0.85,
+                'border-width': 2, 'border-color': '#fff',
+                'text-max-width': '100px', 'text-wrap': 'wrap', 'text-halign': 'center',
+                'min-zoomed-font-size': 8, 'text-outline-width': 2,
+                'text-outline-color': '#fafbfc', 'text-outline-opacity': 0.8
+            }},
+            { selector: 'edge', style: { 'width': 'data(width)', 'line-color': '#b0c4d8', 'curve-style': 'bezier', 'opacity': 0.4 }},
+            { selector: 'node.highlighted', style: { 'background-opacity': 1, 'border-width': 3, 'border-color': '#333', 'font-weight': '700', 'font-size': '12px', 'z-index': 20 }},
+            { selector: 'node.neighbour', style: { 'background-opacity': 1, 'border-width': 2, 'border-color': '#666', 'z-index': 15 }},
+            { selector: 'edge.highlighted', style: { 'line-color': '#39597d', 'opacity': 0.8, 'z-index': 10 }},
+            { selector: 'node.faded', style: { 'opacity': 0.1 }},
+            { selector: 'edge.faded', style: { 'opacity': 0.03 }}
+        ],
+        layout: {
+            name: 'cose',
+            nodeRepulsion: function() { return 20000; },
+            idealEdgeLength: function(edge) { var w = edge.data('weight'); var maxW = Math.max(...allEdges.map(e => e.weight)); return 180 - (w / maxW) * 80; },
+            edgeElasticity: function(edge) { return edge.data('weight'); },
+            gravity: 0.15, numIter: 800, animate: false, nodeDimensionsIncludeLabels: true, padding: 40
+        },
+        minZoom: 0.2, maxZoom: 4, wheelSensitivity: 0.3
+    });
+
+    var slider = document.getElementById('threshold');
+    var threshLabel = document.getElementById('threshold-label');
+    slider.addEventListener('input', function() {
+        var val = parseInt(this.value);
+        threshLabel.textContent = '≥ ' + val + ' shared';
+        cy.elements().remove();
+        cy.add(buildElements(val));
+        cy.layout({
+            name: 'cose', nodeRepulsion: function() { return 20000; },
+            idealEdgeLength: function(edge) { var w = edge.data('weight'); var maxW = Math.max(...allEdges.filter(e => e.weight >= val).map(e => e.weight), 1); return 180 - (w / maxW) * 80; },
+            edgeElasticity: function(edge) { return edge.data('weight'); },
+            gravity: 0.15, numIter: 800, animate: true, animationDuration: 500, nodeDimensionsIncludeLabels: true, padding: 40
+        }).run();
+        networkTooltip.style.display = 'none';
+    });
+
+    var networkTooltip = document.getElementById('network-tooltip');
+    cy.on('tap', 'node', function(evt) {
+        var node = evt.target;
+        var hood = node.neighborhood().add(node);
+        cy.elements().addClass('faded').removeClass('highlighted neighbour');
+        hood.removeClass('faded');
+        node.addClass('highlighted');
+        hood.nodes().not(node).addClass('neighbour');
+        hood.edges().addClass('highlighted');
+
+        var connections = [];
+        node.neighborhood('node').forEach(function(n) {
+            var edge = node.edgesWith(n);
+            if (edge.length > 0) connections.push({ name: n.data('fullLabel'), weight: edge[0].data('weight') });
+        });
+        connections.sort(function(a, b) { return b.weight - a.weight; });
+
+        var html = '<div style="margin-bottom: 0.5rem;"><strong style="font-size: 1rem;">' + node.data('fullLabel') + '</strong></div>' +
+            '<div style="color: var(--text-muted);">' + node.data('posts').toLocaleString() + ' posts</div>';
+        if (connections.length > 0) {
+            html += '<div style="margin-top: 0.5rem; border-top: 1px solid var(--border); padding-top: 0.5rem;"><strong>Strongest connections:</strong></div>';
+            connections.slice(0, 8).forEach(function(c) {
+                html += '<div>' + c.name + ' <span style="color: var(--text-muted);">(' + c.weight + ' shared)</span></div>';
+            });
+            if (connections.length > 8) html += '<div style="color: var(--text-muted);">+ ' + (connections.length - 8) + ' more</div>';
+        }
+        networkTooltip.innerHTML = html;
+        networkTooltip.style.display = 'block';
+        networkTooltip.style.right = '12px';
+        networkTooltip.style.top = '12px';
+        networkTooltip.style.left = 'auto';
+    });
+    cy.on('tap', function(evt) {
+        if (evt.target === cy) { cy.elements().removeClass('faded highlighted neighbour'); networkTooltip.style.display = 'none'; }
+    });
+
+    // =====================================================================
+    // 6. Community migration Sankey (ECharts)
+    // =====================================================================
+    var sankeyData = {{ sankey_json }};
+    var sankeyChart = echarts.init(document.getElementById('sankey'));
+    var eraColours = { '2001-02': '#1b4965', '2003-04': '#095F93', '2005-07': '#2a9d8f', '2008-10': '#e76f51', '2011-13': '#9467bd' };
+
+    sankeyChart.setOption({
+        tooltip: {
+            trigger: 'item',
+            formatter: function(p) {
+                if (p.dataType === 'edge') return p.data.source + ' → ' + p.data.target + '<br><strong>' + p.data.value + ' members</strong>';
+                return p.name;
+            }
+        },
+        series: [{
+            type: 'sankey',
+            data: sankeyData.nodes.map(function(n) {
+                var era = n.name.match(/\((\d{4}-\d{2})\)/);
+                return { name: n.name, itemStyle: { color: era ? (eraColours[era[1]] || '#7f7f7f') : '#7f7f7f' } };
+            }),
+            links: sankeyData.links,
+            orient: 'horizontal', layoutIterations: 64, nodeGap: 8, nodeWidth: 16,
+            left: 10, right: 160, top: 10, bottom: 10,
+            label: { fontSize: 10, formatter: function(p) { return p.name.replace(/ \(\d{4}-\d{2}\)/, ''); } },
+            lineStyle: { color: 'gradient', opacity: 0.3 },
+            emphasis: { focus: 'adjacency', lineStyle: { opacity: 0.6 } }
+        }]
+    });
+
+    // =====================================================================
+    // 7. Forum activity ThemeRiver (ECharts)
+    // =====================================================================
+    var streamRaw = {{ streamgraph_json }};
+    var streamChart = echarts.init(document.getElementById('streamgraph'));
+    var colours = ['#095F93','#e85d2a','#2ca02c','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf','#ff7f0e','#1f77b4','#d62728','#aec7e8','#ffbb78','#98df8a'];
+
+    var forumNames = [...new Set(streamRaw.map(d => d[2]))];
+    var months = [...new Set(streamRaw.map(d => d[0]))].sort();
+    var lookup = {};
+    streamRaw.forEach(d => { lookup[d[0] + '|' + d[2]] = d[1]; });
+
+    var riverData = [];
+    months.forEach(function(m) {
+        forumNames.forEach(function(name) {
+            var shortName = name.replace('Nokia ', '').replace(' and ', ' & ');
+            riverData.push([m, lookup[m + '|' + name] || 0, shortName]);
+        });
+    });
+
+    streamChart.setOption({
+        tooltip: {
+            trigger: 'axis',
+            formatter: function(params) {
+                if (!params || !params.length) return '';
+                var date = params[0].data[0];
+                var items = params.filter(p => p.data[1] > 0).sort((a,b) => b.data[1] - a.data[1]);
+                var total = items.reduce((s,p) => s + p.data[1], 0);
+                return '<strong>' + date + '</strong> (' + total.toLocaleString() + ' posts)<br>' +
+                    items.map(p => '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + p.color + ';margin-right:6px;"></span>' + p.data[2] + ': ' + p.data[1].toLocaleString()).join('<br>');
+            }
+        },
+        legend: { show: false },
+        singleAxis: {
+            type: 'time',
+            bottom: 50, top: 20, left: 50, right: 50,
+            axisLabel: { fontSize: 11, margin: 12 },
+            axisPointer: { type: 'line', lineStyle: { color: '#095F93', opacity: 0.3 } }
+        },
+        series: [{
+            type: 'themeRiver',
+            data: riverData,
+            label: { show: false },
+            emphasis: { focus: 'self' },
+            color: colours
+        }]
+    });
+
+    var shortNames = forumNames.map(n => n.replace('Nokia ', '').replace(' and ', ' & '));
+    var legendEl = document.getElementById('river-legend');
+    if (legendEl) {
+        shortNames.forEach(function(name, i) {
+            var item = document.createElement('span');
+            item.style.cssText = 'display:inline-flex;align-items:center;gap:4px;cursor:pointer;padding:2px 6px;border-radius:3px;font-size:11px;white-space:nowrap;';
+            item.innerHTML = '<span style="width:10px;height:10px;border-radius:50%;background:' + colours[i % colours.length] + ';flex-shrink:0;"></span>' + name;
+            item.addEventListener('mouseenter', function() {
+                streamChart.dispatchAction({ type: 'highlight', seriesIndex: 0, name: name });
+            });
+            item.addEventListener('mouseleave', function() {
+                streamChart.dispatchAction({ type: 'downplay', seriesIndex: 0, name: name });
+            });
+            legendEl.appendChild(item);
+        });
+    }
+
+    // =====================================================================
+    // 8. Thread lifespan (ECharts)
+    // =====================================================================
+    var lifespanRaw = {{ lifespan_json }};
+    var lifespanChart = echarts.init(document.getElementById('lifespanChart'));
+    lifespanChart.setOption({
+        tooltip: { trigger: 'axis', formatter: function(p) { return p[0].name + ': ' + p[0].value.toLocaleString() + ' threads'; } },
+        grid: { left: 60, right: 20, top: 10, bottom: 30 },
+        xAxis: { type: 'category', data: lifespanRaw.map(d => d[0]), axisLabel: { fontSize: 11 } },
+        yAxis: { type: 'value', axisLabel: { formatter: function(v) { return (v/1000).toFixed(0) + 'k'; } } },
+        series: [{
+            type: 'bar', data: lifespanRaw.map(d => d[1]),
+            itemStyle: { color: '#095F93', borderRadius: [3, 3, 0, 0] },
+            barWidth: '60%'
+        }]
+    });
+
+    // =====================================================================
+    // Resize all ECharts on window resize
+    // =====================================================================
+    window.addEventListener('resize', function() {
+        heatmapChart.resize(); streamChart.resize();
+        lifespanChart.resize(); sankeyChart.resize();
+    });
 });
 </script>
+
 {% endblock %}
