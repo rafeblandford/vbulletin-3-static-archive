@@ -47,8 +47,8 @@
       "@type": "Comment",
       "author": {
         "@type": "Person",
-        "name": "{{ post.display_name|e }}"{% if post.userid %},
-        "url": "{{ config.site.url }}{{ base_path }}/user/{{ post.userid }}/"{% endif %}
+        "name": "{{ post.display_name|e }}",
+        "url": "{% if post.userid %}{{ config.site.url }}{{ base_path }}/user/{{ post.userid }}/{% else %}{{ config.site.url }}{{ base_path }}/thread/{{ thread.threadid }}/#post{{ post.postid }}{% endif %}"
       },
       "datePublished": "{{ post.dateline_iso }}",
       "text": "{{ post.text_excerpt|e }}",
