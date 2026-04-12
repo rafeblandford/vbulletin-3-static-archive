@@ -807,8 +807,12 @@ def generate_site(db, config, output_dir, forum_filter=None, thread_limit=None):
     stats_html = tpl_stats.render(
         stats=stats, monthly_json=monthly_json, forums_json=forums_json,
         yearly_stats=yearly_stats, busiest_days=busiest_days, top_users=top_users,
+        heatmap_json='[]', streamgraph_json='[]', lifespan_json='[]',
+        nodes_json='[]', edges_json='[]', category_json='{}',
+        sankey_json='{"nodes":[],"links":[]}',
     )
     write_file(os.path.join(output_dir, 'stats/index.html'), stats_html)
+    print("  NOTE: Stats page has basic charts only. Run build_pages.py for full visualisations.")
 
     # --- Generate custom pages ---
     custom = config.get('custom_pages', {})
