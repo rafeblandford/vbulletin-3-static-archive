@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 output/
 .env
+
+# macOS junk
+.DS_Store
