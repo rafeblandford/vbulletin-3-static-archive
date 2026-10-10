@@ -7,7 +7,8 @@
 {% block meta %}{% endblock %}
 <link rel="stylesheet" href="{{ base_path }}/static/style.css">
 {% block head %}{% endblock %}
-</head>
+{% if config.analytics and config.analytics.umami_website_id %}<script defer src="{{ config.analytics.umami_script_url }}" data-website-id="{{ config.analytics.umami_website_id }}"></script>
+{% endif %}</head>
 <body>
 <div class="archive-banner">{{ config.banner.text }} · <a href="{{ base_path }}/about/">{{ config.banner.about_link_text }}</a></div>
 <header class="site-header"><div class="header-inner">

@@ -44,6 +44,11 @@ footer:
     - label: "Archive Portal"
       url: "https://archive.rafeblandford.com/"
 
+# Analytics (optional) — Umami. Leave umami_website_id unset to render no script.
+# analytics:
+#   umami_script_url: "https://umami.example.com/script.js"
+#   umami_website_id: "00000000-0000-0000-0000-000000000000"
+
 # Database connection
 database:
   host: "172.20.0.9"
